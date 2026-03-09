@@ -3,11 +3,7 @@ import os
 import random
 import base64
 import html
-import smtplib
-import ssl
-from email.mime.application import MIMEApplication
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
+import requests
 from email.utils import formataddr
 from flask import Flask, render_template, request, redirect, url_for, flash, session, send_from_directory, abort, jsonify
 from flask_sqlalchemy import SQLAlchemy
@@ -81,66 +77,55 @@ def _email_shell(title, subtitle, content_html):
 
 def smtp_send(to_emails, subject, html_content, attachments=None):
     """
-    Send an email via SMTP (Haraka-compatible).
+    Send an email via Resend API.
     - to_emails: single email or list
     - attachments: list of dicts: [{"content": base64str, "type":"application/pdf","filename":"x.pdf"}]
     """
     try:
-        from_email = os.getenv("FROM_EMAIL")
+        resend_api_key = os.getenv("RESEND_API_KEY", "").strip()
+        from_email = os.getenv("RESEND_FROM_EMAIL") or os.getenv("FROM_EMAIL")
         from_name = os.getenv("FROM_NAME", "Sri Vinayaga Stores").strip()
+        if not resend_api_key:
+            print("RESEND_API_KEY not set. Skipping send.")
+            return False
         if not from_email:
-            print("FROM_EMAIL not set. Skipping send.")
+            print("RESEND_FROM_EMAIL/FROM_EMAIL not set. Skipping send.")
             return False
         to_list = to_emails if isinstance(to_emails, list) else [to_emails]
         if not to_list:
             return False
 
-        mail_server = os.getenv("MAIL_SERVER", "").strip()
-        mail_port = int(os.getenv("MAIL_PORT", "25"))
-        use_tls = os.getenv("MAIL_USE_TLS", "False") == "True"
-        use_ssl = os.getenv("MAIL_USE_SSL", "False") == "True"
-        mail_username = os.getenv("MAIL_USERNAME", "").strip()
-        mail_password = os.getenv("MAIL_PASSWORD", "")
-
-        if not mail_server:
-            print("MAIL_SERVER not set. Skipping send.")
-            return False
-
-        msg = MIMEMultipart()
-        msg["From"] = formataddr((from_name, from_email))
-        msg["To"] = ", ".join(to_list)
-        msg["Subject"] = subject
-        msg.attach(MIMEText(html_content, "html"))
-
+        payload = {
+            "from": formataddr((from_name, from_email)),
+            "to": to_list,
+            "subject": subject,
+            "html": html_content,
+        }
         if attachments:
+            resend_attachments = []
             for at in attachments:
-                file_content = base64.b64decode(at["content"])
-                part = MIMEApplication(file_content, Name=at["filename"])
-                part["Content-Disposition"] = f'attachment; filename="{at["filename"]}"'
-                part["Content-Type"] = at.get("type", "application/octet-stream")
-                msg.attach(part)
+                resend_attachments.append({
+                    "filename": at["filename"],
+                    "content": at["content"],
+                })
+            payload["attachments"] = resend_attachments
 
-        if use_ssl:
-            context = ssl.create_default_context()
-            with smtplib.SMTP_SSL(mail_server, mail_port, context=context, timeout=15) as server:
-                server.ehlo()
-                if mail_username and mail_password and server.has_extn("auth"):
-                    server.login(mail_username, mail_password)
-                server.sendmail(from_email, to_list, msg.as_string())
-        else:
-            with smtplib.SMTP(mail_server, mail_port, timeout=15) as server:
-                server.ehlo()
-                if use_tls:
-                    context = ssl.create_default_context()
-                    server.starttls(context=context)
-                    server.ehlo()
-                if mail_username and mail_password and server.has_extn("auth"):
-                    server.login(mail_username, mail_password)
-                server.sendmail(from_email, to_list, msg.as_string())
+        response = requests.post(
+            "https://api.resend.com/emails",
+            headers={
+                "Authorization": f"Bearer {resend_api_key}",
+                "Content-Type": "application/json",
+            },
+            json=payload,
+            timeout=20,
+        )
+        if response.status_code >= 400:
+            print(f"Resend send error {response.status_code}: {response.text}")
+            return False
         return True
 
     except Exception as e:
-        print("SMTP send error:", e)
+        print("Resend send exception:", e)
         return False
 
 def send_email_otp(to_email, otp):
@@ -383,14 +368,9 @@ def create_app():
     }
     app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-    # SMTP settings used by smtp_send() for Haraka (or any SMTP relay)
-    app.config['MAIL_SERVER'] = os.getenv("MAIL_SERVER", "")
-    app.config['MAIL_PORT'] = int(os.getenv("MAIL_PORT", "25"))
-    app.config['MAIL_USE_TLS'] = os.getenv("MAIL_USE_TLS", "False") == "True"
-    app.config['MAIL_USE_SSL'] = os.getenv("MAIL_USE_SSL", "False") == "True"
-    app.config['MAIL_USERNAME'] = os.getenv("MAIL_USERNAME", "")
-    app.config['MAIL_PASSWORD'] = os.getenv("MAIL_PASSWORD", "")
-    app.config['MAIL_DEFAULT_SENDER'] = os.getenv("MAIL_DEFAULT_SENDER", os.getenv("FROM_EMAIL", ""))
+    # Resend settings used by smtp_send() (kept function name to avoid changing call sites)
+    app.config['RESEND_API_KEY'] = os.getenv("RESEND_API_KEY", "")
+    app.config['RESEND_FROM_EMAIL'] = os.getenv("RESEND_FROM_EMAIL", os.getenv("FROM_EMAIL", ""))
 
     db.init_app(app)
 
