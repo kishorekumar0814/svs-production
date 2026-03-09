@@ -1,12 +1,19 @@
-﻿{% extends "base.html" %}
+{% extends "base.html" %}
 {% block content %}
-<div class="center-card">
-  <h2>Customer Login</h2>
-  <form method="post">
-    <label>Email or CUID</label>
-    <input type="text" name="identifier" placeholder="Enter email or CUID" autocomplete="username" required>
-    <label>Password</label>
-    <input type="password" name="password" placeholder="Enter password" autocomplete="current-password" required>
+<div class="center-card auth-card">
+  <div class="auth-head">
+    <h2>Customer Login</h2>
+    <p>Sign in to view orders, status updates, and bills.</p>
+  </div>
+  <form method="post" class="auth-form">
+    <div class="form-field">
+      <label>Email or CUID</label>
+      <input type="text" name="identifier" placeholder="Enter email or CUID" autocomplete="username" required>
+    </div>
+    <div class="form-field">
+      <label>Password</label>
+      <input type="password" name="password" placeholder="Enter password" autocomplete="current-password" required>
+    </div>
     <div class="form-actions auth-actions">
       <button class="btn auth-submit" type="submit">Login</button>
       <div class="auth-links">
@@ -17,4 +24,3 @@
   </form>
 </div>
 {% endblock %}
-
