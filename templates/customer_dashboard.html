@@ -124,22 +124,22 @@
                 <span class="timeline-step {% if current_step >= 4 %}done{% endif %}">Delivered</span>
               </div>
             </td>
-            <td class="order-actions">
+            <td class="order-actions customer-order-actions">
               <form method="post" action="{{ url_for('customer_reorder', order_pk=o.id) }}" onsubmit="return confirm('Reorder this cart?');">
-                <button class="btn small customer-btn-sm">Reorder</button>
+                <button class="btn small customer-btn-sm action-btn">Reorder</button>
               </form>
               {% if o.raw_text %}
               <form method="post" action="{{ url_for('customer_add_favorite') }}">
                 <input type="hidden" name="item_text" value="{{ o.raw_text }}">
-                <button class="btn small customer-btn-sm" type="submit">Pin</button>
+                <button class="btn small customer-btn-sm action-btn" type="submit">Pin</button>
               </form>
               {% endif %}
               <form method="post" action="{{ url_for('customer_delete_order', order_pk=o.id) }}" onsubmit="return confirm('Delete order?');">
-                <button class="btn small danger customer-btn-sm">Delete</button>
+                <button class="btn small danger customer-btn-sm action-btn">Delete</button>
               </form>
 
               {% if bills.get(o.order_id) %}
-                <a class="btn small customer-btn-sm" href="{{ url_for('download_bill', bill_id=bills[o.order_id].bill_id) }}">Download Bill</a>
+                <a class="btn small customer-btn-sm action-btn" href="{{ url_for('download_bill', bill_id=bills[o.order_id].bill_id) }}">Download Bill</a>
               {% endif %}
             </td>
           </tr>
@@ -213,5 +213,22 @@
       deals[idx].classList.add('active');
     }, 2500);
   })();
+
+  function customerShouldAutoRefresh() {
+    const active = document.activeElement;
+    if (active && ["INPUT", "TEXTAREA", "SELECT"].includes(active.tagName)) {
+      return false;
+    }
+    if (document.getElementById('deleteModal')?.style.display === 'flex') {
+      return false;
+    }
+    return true;
+  }
+
+  setInterval(function () {
+    if (customerShouldAutoRefresh()) {
+      window.location.reload();
+    }
+  }, 20000);
 </script>
 {% endblock %}

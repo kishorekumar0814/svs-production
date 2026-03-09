@@ -229,8 +229,11 @@
               </td>
               <td>Rs {{ "%.2f"|format(row.bill.total_amount) }}</td>
               <td>{{ row.bill.created_at|ist_datetime }}</td>
-              <td>
-                <a class="btn small admin-btn-sm" href="{{ url_for('download_bill', bill_id=row.bill.bill_id) }}">Download Bill</a>
+              <td class="admin-order-actions order-actions-fixed">
+                <a class="btn small admin-btn-sm action-btn" href="{{ url_for('download_bill', bill_id=row.bill.bill_id) }}">Download Bill</a>
+                <form method="post" action="{{ url_for('admin_delete_billed_order', bill_id=row.bill.bill_id) }}" class="inline-form order-delete-form">
+                  <button class="btn small danger admin-btn-sm action-btn" type="submit" onclick="return confirm('Delete this billed order and linked files?');">Delete</button>
+                </form>
               </td>
             </tr>
             {% endfor %}
@@ -333,5 +336,22 @@
       activityPanel.classList.remove('open');
     }
   });
+
+  function adminShouldAutoRefresh() {
+    const active = document.activeElement;
+    if (active && ["INPUT", "TEXTAREA", "SELECT"].includes(active.tagName)) {
+      return false;
+    }
+    if (document.getElementById('mailPanel')?.classList.contains('open')) return false;
+    if (document.getElementById('notifPanel')?.classList.contains('open')) return false;
+    if (document.getElementById('activityPanel')?.classList.contains('open')) return false;
+    return true;
+  }
+
+  setInterval(function () {
+    if (adminShouldAutoRefresh()) {
+      window.location.reload();
+    }
+  }, 30000);
 </script>
 {% endblock %}

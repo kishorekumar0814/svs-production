@@ -319,6 +319,9 @@ a:hover{opacity:.9}
 .customer-file{padding:8px}
 .customer-form-actions{margin-top:8px}
 .order-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.customer-order-actions{display:grid;grid-template-columns:1fr;gap:8px;min-width:150px}
+.customer-order-actions form,.customer-order-actions a{width:100%}
+.customer-order-actions .btn{width:100%;justify-content:center}
 
 .status-badge{font-size:12px;font-weight:800;padding:4px 8px;border-radius:999px;display:inline-block}
 .status-badge.pending{color:#0f4f99;background:#e3efff}
@@ -525,4 +528,3 @@ a:hover{opacity:.9}
   .admin-stats-grid{grid-template-columns:1fr}
   .nav-brand{font-size:13px}
 }
-

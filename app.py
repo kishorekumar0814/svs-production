@@ -695,6 +695,35 @@ def create_app():
             flash(f"Error deleting bill: {str(e)}", "danger")
         return redirect(url_for('admin_dashboard'))
 
+    @app.route('/admin/billed-order/<bill_id>/delete', methods=['POST'])
+    @admin_required
+    def admin_delete_billed_order(bill_id):
+        bill = Bill.query.filter_by(bill_id=bill_id).first()
+        if not bill:
+            flash("Billed order not found.", "warning")
+            return redirect(url_for('admin_dashboard'))
+        try:
+            order = Order.query.filter_by(order_id=bill.order_id).first()
+            if bill.pdf_filename:
+                try:
+                    os.remove(os.path.join(app.config['UPLOAD_FOLDER'], bill.pdf_filename))
+                except:
+                    pass
+            if order and order.uploaded_filename:
+                try:
+                    os.remove(os.path.join(app.config['UPLOAD_FOLDER'], order.uploaded_filename))
+                except:
+                    pass
+            db.session.delete(bill)
+            if order:
+                db.session.delete(order)
+            db.session.commit()
+            flash("Billed order deleted successfully.", "success")
+        except Exception as e:
+            db.session.rollback()
+            flash(f"Error deleting billed order: {str(e)}", "danger")
+        return redirect(url_for('admin_dashboard'))
+
     @app.route("/admin/forgot-password", methods=["GET", "POST"])
     def admin_forgot_password():
         if request.method == "POST":
