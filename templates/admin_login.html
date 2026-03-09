@@ -1,0 +1,20 @@
+﻿{% extends "base.html" %}
+{% block content %}
+<div class="center-card">
+  <h2>Admin Login</h2>
+  <form method="post">
+    <label>Email or AUID</label>
+    <input type="text" name="identifier" placeholder="Enter email or AUID" autocomplete="username" required>
+    <label>Password</label>
+    <input type="password" name="password" placeholder="Enter password" autocomplete="current-password" required>
+    <div class="form-actions auth-actions">
+      <button class="btn auth-submit" type="submit">Login</button>
+      <div class="auth-links">
+        <a href="{{ url_for('admin_signup') }}" class="btn-link auth-link-gap">Create an account</a>
+        <a href="{{ url_for('admin_forgot_password') }}" class="btn-link">Forgot Password?</a>
+      </div>
+    </div>
+  </form>
+</div>
+{% endblock %}
+

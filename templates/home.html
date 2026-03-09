@@ -1,0 +1,33 @@
+﻿{% extends "base.html" %}
+{% block content %}
+<div class="home-grid">
+  <section class="cards">
+    <h2>Available Categories</h2>
+    <div class="card-row category-grid">
+      <div class="card" onclick="cardPop(this)">Vegetables & Fruits</div>
+      <div class="card" onclick="cardPop(this)">Rice & Flour</div>
+      <div class="card" onclick="cardPop(this)">Dal & Pulses</div>
+      <div class="card" onclick="cardPop(this)">Spices & Condiments</div>
+      <div class="card" onclick="cardPop(this)">Biscuits & Snacks</div>
+      <div class="card" onclick="cardPop(this)">Beverages</div>
+      <div class="card" onclick="cardPop(this)">Tea & Coffee</div>
+      <div class="card" onclick="cardPop(this)">Milk, Curd & Dairy</div>
+      <div class="card" onclick="cardPop(this)">Soaps & Shampoos</div>
+      <div class="card" onclick="cardPop(this)">Detergents</div>
+      <div class="card" onclick="cardPop(this)">Home Utilities</div>
+      <div class="card" onclick="cardPop(this)">Cleaning Needs</div>
+      <div class="card" onclick="cardPop(this)">Stationaries</div>
+      <div class="card" onclick="cardPop(this)">Fancy Items</div>
+      <div class="card" onclick="cardPop(this)">Eggs & Essentials</div>
+    </div>
+  </section>
+
+  <section class="map-area">
+    <h2>Shop Location</h2>
+    <div class="map-wrap">
+      <iframe src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d256.62978995747744!2d79.2138325!3d12.948255399999999!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3bad377c4899c59f%3A0xf99b96e39c4a377e!2sSri%20Vinayaga%20stores!5e1!3m2!1sen!2sin!4v1763103733488!5m2!1sen!2sin"
+        allowfullscreen="" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+    </div>
+  </section>
+</div>
+{% endblock %}

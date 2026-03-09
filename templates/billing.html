@@ -1,0 +1,77 @@
+﻿{% extends "base.html" %}
+{% block content %}
+<div class="center-card billing-card">
+  <h2>Create Bill - Order {{ order.order_id }}</h2>
+  <div class="billing-summary">
+    <p><strong>Customer:</strong> {{ order.customer.name }} ({{ order.customer.email }})</p>
+    <p><strong>Pickup:</strong> {{ order.pickup_option }} | <strong>Status:</strong> {{ order.status }}</p>
+  </div>
+
+  <form method="post" id="billingForm" class="billing-form">
+    <div class="billing-head-row">
+      <span>Item Name</span>
+      <span>Qty</span>
+      <span>Price (Rs)</span>
+      <span>Action</span>
+    </div>
+
+    <div id="itemsWrapper" class="billing-items">
+      <div class="item-row bill-item-row">
+        <input class="admin-input" name="item_name[]" placeholder="Item name" required>
+        <input class="admin-input" name="item_qty[]" placeholder="Qty (e.g., 2kg)" required>
+        <input class="admin-input bill-price" name="item_price[]" placeholder="Price" required>
+        <button type="button" class="btn small danger" onclick="removeRow(this)">Remove</button>
+      </div>
+    </div>
+
+    <div class="billing-actions">
+      <button type="button" class="btn" onclick="addRow()">Add Item</button>
+      <div class="bill-total-box">Estimated Total: <strong id="billTotal">Rs 0.00</strong></div>
+    </div>
+
+    <div class="form-actions">
+      <button class="btn" type="submit">Generate Bill PDF</button>
+      <a class="btn" href="{{ url_for('admin_dashboard') }}">Back</a>
+    </div>
+  </form>
+</div>
+<script>
+function addRow(){
+  const wrapper = document.getElementById('itemsWrapper');
+  const div = document.createElement('div');
+  div.className = 'item-row bill-item-row';
+  div.innerHTML = `<input class="admin-input" name="item_name[]" placeholder="Item name" required>
+                   <input class="admin-input" name="item_qty[]" placeholder="Qty (e.g., 1kg)" required>
+                   <input class="admin-input bill-price" name="item_price[]" placeholder="Price" required>
+                   <button type="button" class="btn small danger" onclick="removeRow(this)">Remove</button>`;
+  wrapper.appendChild(div);
+  updateTotal();
+}
+function removeRow(b){
+  const row = b.parentElement;
+  if (document.querySelectorAll('.bill-item-row').length <= 1) return;
+  row.remove();
+  updateTotal();
+}
+function updateTotal(){
+  let total = 0;
+  document.querySelectorAll('.bill-price').forEach((el) => {
+    const normalized = (el.value || "").replace(/[^0-9.]/g, "");
+    const v = parseFloat(normalized);
+    if (!isNaN(v)) total += v;
+  });
+  document.getElementById('billTotal').textContent = `Rs ${total.toFixed(2)}`;
+}
+document.addEventListener('input', function(e){
+  if (e.target && e.target.matches('.bill-price')) {
+    updateTotal();
+  }
+});
+document.addEventListener('change', function(e){
+  if (e.target && e.target.matches('.bill-price')) {
+    updateTotal();
+  }
+});
+updateTotal();
+</script>
+{% endblock %}

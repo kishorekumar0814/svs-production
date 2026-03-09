@@ -1,0 +1,119 @@
+﻿apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sri-vinayaga-webapp
+  labels:
+    app: sri-vinayaga-webapp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sri-vinayaga-webapp
+  template:
+    metadata:
+      labels:
+        app: sri-vinayaga-webapp
+    spec:
+      containers:
+        - name: webapp
+          image: your-docker-repo/sri-vinayaga-webapp:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 5000
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: sri-vinayaga-secrets
+                  key: DATABASE_URL
+            - name: SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: sri-vinayaga-secrets
+                  key: SECRET_KEY
+            - name: MAIL_SERVER
+              valueFrom:
+                secretKeyRef:
+                  name: sri-vinayaga-secrets
+                  key: MAIL_SERVER
+            - name: MAIL_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: sri-vinayaga-secrets
+                  key: MAIL_PORT
+            - name: MAIL_USE_TLS
+              valueFrom:
+                secretKeyRef:
+                  name: sri-vinayaga-secrets
+                  key: MAIL_USE_TLS
+            - name: MAIL_USE_SSL
+              valueFrom:
+                secretKeyRef:
+                  name: sri-vinayaga-secrets
+                  key: MAIL_USE_SSL
+            - name: MAIL_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: sri-vinayaga-secrets
+                  key: MAIL_USERNAME
+            - name: MAIL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: sri-vinayaga-secrets
+                  key: MAIL_PASSWORD
+            - name: FROM_EMAIL
+              valueFrom:
+                secretKeyRef:
+                  name: sri-vinayaga-secrets
+                  key: FROM_EMAIL
+            - name: STORE_EMAIL
+              valueFrom:
+                secretKeyRef:
+                  name: sri-vinayaga-secrets
+                  key: STORE_EMAIL
+            - name: ADMIN_SECURITY_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: sri-vinayaga-secrets
+                  key: ADMIN_SECURITY_KEY
+            - name: REMINDER_DAYS
+              value: "7"
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sri-vinayaga-webapp-service
+spec:
+  selector:
+    app: sri-vinayaga-webapp
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 5000
+  type: ClusterIP
+
+# Optional ingress (uncomment and adapt host/class)
+# ---
+# apiVersion: networking.k8s.io/v1
+# kind: Ingress
+# metadata:
+#   name: sri-vinayaga-webapp-ingress
+# spec:
+#   rules:
+#     - host: your-domain.example.com
+#       http:
+#         paths:
+#           - path: /
+#             pathType: Prefix
+#             backend:
+#               service:
+#                 name: sri-vinayaga-webapp-service
+#                 port:
+#                   number: 80

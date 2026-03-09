@@ -1,0 +1,167 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+    .otp-container {
+        display: flex;
+        justify-content: center;
+        margin-top: 40px;
+    }
+
+    .otp-card {
+        background: #ffffff;
+        width: 380px;
+        padding: 25px;
+        border-radius: 14px;
+        box-shadow: 0px 4px 18px rgba(0,0,0,0.12);
+        animation: fadeIn 0.3s ease-in-out;
+    }
+
+    .otp-card h3 {
+        text-align: center;
+        margin-bottom: 15px;
+        font-weight: 600;
+        color: #222;
+    }
+
+    .otp-input-group {
+        display: flex;
+        justify-content: space-between;
+        margin: 20px 0;
+    }
+
+    .otp-box {
+        width: 48px;
+        height: 55px;
+        font-size: 18px;
+        text-align: center;
+        border-radius: 10px;
+        border: 1px solid #ccc;
+        outline: none;
+        transition: all 0.2s;
+    }
+
+    .otp-box:focus {
+        border-color: #0066ff;
+        box-shadow: 0 0 5px rgba(0, 102, 255, 0.4);
+    }
+
+    .btn {
+        width: 100%;
+        padding: 10px;
+        background: #0066ff;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        margin-top: 10px;
+        cursor: pointer;
+    }
+
+    .btn:hover {
+        background: #0099ff;
+    }
+
+    .resend {
+        text-align: center;
+        margin-top: 15px;
+        font-size: 14px;
+    }
+
+    .resend button {
+        border: none;
+        background: none;
+        color: #0066ff;
+        font-weight: bold;
+        cursor: pointer;
+        opacity: 0.6;
+    }
+
+    .resend button.enabled {
+        opacity: 1;
+        text-decoration: underline;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+
+<div class="otp-container">
+    <div class="otp-card">
+        <h3>Verify OTP</h3>
+
+        <form method="POST" id="otpForm">
+            <div class="otp-input-group">
+                <input type="text" maxlength="1" class="otp-box" id="otp1">
+                <input type="text" maxlength="1" class="otp-box" id="otp2">
+                <input type="text" maxlength="1" class="otp-box" id="otp3">
+                <input type="text" maxlength="1" class="otp-box" id="otp4">
+                <input type="text" maxlength="1" class="otp-box" id="otp5">
+                <input type="text" maxlength="1" class="otp-box" id="otp6">
+            </div>
+
+            <input type="hidden" name="otp" id="finalOtp">
+
+            <button class="btn" type="submit">Verify OTP</button>
+        </form>
+
+        <div class="resend">
+            <span id="timer">Resend OTP in <b>60</b> sec</span>  
+            <br>
+            <button id="resendBtn" disabled>Resend OTP</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    // AUTO MOVE INPUT BOXES
+    const boxes = document.querySelectorAll(".otp-box");
+
+    boxes.forEach((box, index) => {
+        box.addEventListener("input", function() {
+            if (this.value.length === 1 && index < boxes.length - 1) {
+                boxes[index + 1].focus();
+            }
+        });
+
+        box.addEventListener("keydown", function(e) {
+            if (e.key === "Backspace" && !this.value && index > 0) {
+                boxes[index - 1].focus();
+            }
+        });
+    });
+
+    // ON SUBMIT — JOIN ALL DIGITS
+    document.getElementById("otpForm").addEventListener("submit", function() {
+        let otp = "";
+        boxes.forEach(box => otp += box.value);
+        document.getElementById("finalOtp").value = otp;
+    });
+
+    // TIMER + RESEND BUTTON
+    let countdown = 60;
+    let timer = document.getElementById("timer");
+    let resendBtn = document.getElementById("resendBtn");
+
+    let interval = setInterval(() => {
+        countdown--;
+        timer.innerHTML = `Resend OTP in <b>${countdown}</b> sec`;
+
+        if (countdown <= 0) {
+            clearInterval(interval);
+            timer.innerHTML = "You can now resend OTP";
+            resendBtn.disabled = false;
+            resendBtn.classList.add("enabled");
+        }
+    }, 1000);
+
+    // RESEND OTP CLICK
+    resendBtn.addEventListener("click", function () {
+        if (!resendBtn.disabled) {
+            window.location.href = "{{ url_for('admin_resend_otp') }}";
+        }
+    });
+</script>
+
+{% endblock %}

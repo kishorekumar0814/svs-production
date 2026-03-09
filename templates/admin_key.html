@@ -1,0 +1,16 @@
+﻿{% extends "base.html" %}
+
+{% block content %}
+<div class="center-card security-card">
+  <h3 class="security-title">Admin Security Check</h3>
+
+  <form method="POST">
+    <label class="security-label">Enter Security Key</label>
+    <input type="password" name="secret_key" placeholder="Security Key" class="security-input">
+
+    <button class="btn security-submit" type="submit">Continue</button>
+  </form>
+</div>
+
+{% endblock %}
+

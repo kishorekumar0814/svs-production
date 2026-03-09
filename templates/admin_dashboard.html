@@ -1,0 +1,337 @@
+﻿{% extends "base.html" %}
+{% block content %}
+<div class="admin-wrap">
+
+  <div class="admin-topbar">
+    <button class="notif-btn" type="button" onclick="toggleNotifications()" title="View notifications">
+      <span class="notif-icon" aria-hidden="true">
+        <svg class="topbar-icon-svg" viewBox="0 0 24 24" fill="none">
+          <path d="M12 4a5 5 0 0 0-5 5v2.8c0 .8-.2 1.6-.7 2.2L5 16h14l-1.3-2c-.5-.6-.7-1.4-.7-2.2V9a5 5 0 0 0-5-5Z"/>
+          <path d="M9.8 18a2.2 2.2 0 0 0 4.4 0"/>
+        </svg>
+      </span>
+      <span id="notifCount" class="notif-count">{{ unseen_notifications_count }}</span>
+    </button>
+    <button class="notif-btn mail-btn" type="button" onclick="toggleMailPanel()" title="Push Mail Center">
+      <span class="notif-icon" aria-hidden="true">
+        <svg class="topbar-icon-svg" viewBox="0 0 24 24" fill="none">
+          <rect x="3.5" y="5.5" width="17" height="13" rx="2"/>
+          <path d="m4.5 7 7.5 6 7.5-6"/>
+        </svg>
+      </span>
+    </button>
+    <button class="notif-btn activity-btn" type="button" onclick="toggleActivityPanel()" title="Customer activities">
+      <span class="notif-icon" aria-hidden="true">
+        <svg class="topbar-icon-svg" viewBox="0 0 24 24" fill="none">
+          <path d="M4 18h16"/>
+          <path d="M7 18v-5"/>
+          <path d="M12 18V8"/>
+          <path d="M17 18v-9"/>
+        </svg>
+      </span>
+      <span id="activityCount" class="notif-count">{{ activity_count }}</span>
+    </button>
+    <div id="notifPanel" class="notif-panel">
+      <h4>New Customer Orders</h4>
+      {% if notifications %}
+        <ul>
+        {% for n in notifications %}
+          <li>
+            <strong>{{ n.order_id }}</strong> - {{ n.customer.name }}
+            <span class="notif-time">{{ n.created_at|ist_datetime }}</span>
+          </li>
+        {% endfor %}
+        </ul>
+      {% else %}
+        <p>No new notifications.</p>
+      {% endif %}
+    </div>
+    <div id="mailPanel" class="notif-panel mail-panel">
+      <button type="button" class="mail-close-btn" onclick="closeMailPanel()" aria-label="Close mail panel">&times;</button>
+      <h4>Push Mail Center</h4>
+      <form method="post" action="{{ url_for('admin_send_mail') }}" class="mail-form">
+        <div class="mail-grid">
+          <label>Send To</label>
+          <select class="admin-input" name="target" id="mailTarget" onchange="toggleCustomerField()">
+            <option value="all">All Customers</option>
+            <option value="specific">Particular Customer</option>
+          </select>
+
+          <label id="customerRefLabel" class="hidden">Customer Email or CUID</label>
+          <input id="customerRefField" class="admin-input hidden" type="text" name="customer_ref" placeholder="customer@email.com or CUID">
+
+          <label>Subject</label>
+          <input class="admin-input" type="text" name="subject" placeholder="Important store update" required>
+        </div>
+        <label>Message</label>
+        <textarea class="admin-input mail-textarea" name="message" placeholder="Type message for customers..." required></textarea>
+        <div class="form-actions"><button class="btn admin-btn" type="submit">Send Mail</button></div>
+      </form>
+    </div>
+    <div id="activityPanel" class="notif-panel activity-panel">
+      <h4>Recent Customer Activity</h4>
+      {% if recent_customer_activities %}
+        <ul class="activity-panel-list">
+        {% for a in recent_customer_activities %}
+          <li>
+            <span><strong>{{ a.actor_name or 'Customer' }}</strong> - {{ a.action.replace('_', ' ') }}</span>
+            <span class="notif-time">{{ a.created_at|ist_datetime }}</span>
+          </li>
+        {% endfor %}
+        </ul>
+      {% else %}
+        <p>No activity logged yet.</p>
+      {% endif %}
+    </div>
+  </div>
+  <div id="mailOverlay" class="mail-overlay" onclick="closeMailPanel()"></div>
+
+  <div class="admin-stats-grid">
+    <div class="stat-card"><h4>Customers</h4><p>{{ customers_count }}</p></div>
+    <div class="stat-card"><h4>Pending Orders</h4><p>{{ pending_orders }}</p></div>
+    <div class="stat-card"><h4>Completed Orders</h4><p>{{ completed_orders }}</p></div>
+    <div class="stat-card"><h4>Customer Logins Today</h4><p>{{ customer_logins_today }}</p></div>
+  </div>
+
+  <div class="admin-card admin-card-main">
+    <h3>Admin Details</h3>
+    <p><strong>Name:</strong> {{ admin.name }}</p>
+    <p><strong>AUID:</strong> {{ admin.auid }}</p>
+    <p><strong>Mobile:</strong> {{ admin.mobile }}</p>
+
+    <div class="admin-actions">
+      <a href="{{ url_for('admin_update') }}" class="btn small admin-btn"><b>Edit Profile</b></a>
+      <button class="btn small danger admin-btn" onclick="openDeleteModal()"><b>Delete Account</b></button>
+    </div>
+
+    <form method="post" action="{{ url_for('admin_upload_qr') }}" enctype="multipart/form-data" class="qr-form">
+      <label>Upload QR (for bills)</label>
+      <div class="qr-form-row">
+        <input type="file" class="admin-input admin-file" name="qr" accept="image/*">
+        <button class="btn admin-btn" type="submit">Upload QR</button>
+        <a href="{{ url_for('admin_customers') }}" class="btn admin-btn">View Customers</a>
+      </div>
+      {% if session.get('qr_uploaded') %}
+        <span class="qr-success">QR Code Uploaded</span>
+      {% endif %}
+    </form>
+  </div>
+
+  <div id="deleteModal" class="delete-modal">
+    <div id="deleteCard" class="delete-card">
+      <h3 class="delete-title"><b>Warning!</b></h3>
+      <p>Are you sure you want to delete your account?</p>
+      <div class="delete-actions">
+        <button class="btn admin-btn-sm" onclick="closeDeleteModal()">No</button>
+        <form method="post" action="{{ url_for('admin_delete') }}" class="inline-form">
+          <button class="btn danger admin-btn-sm" type="submit" onclick="animateDelete()">Yes</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast" class="dashboard-toast admin-toast">Account deleted successfully!</div>
+
+  <div class="orders-card admin-orders-card">
+    <h3>Current Customer Orders (Not Billed)</h3>
+    {% if orders %}
+      <div class="table-wrap">
+        <table class="orders-table admin-orders-table">
+          <thead>
+            <tr>
+              <th>Order ID</th>
+              <th>Customer</th>
+              <th>Items/Text</th>
+              <th>File</th>
+              <th>Pickup</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for o in orders %}
+            <tr>
+              <td>{{ o.order_id }}</td>
+              <td>{{ o.customer.name }}<br><small>{{ o.customer.email }}</small></td>
+              <td class="orders-text">{{ o.raw_text or '-' }}</td>
+              <td>
+                {% if o.uploaded_filename %}
+                  <a href="{{ url_for('uploaded_file', filename=o.uploaded_filename) }}" target="_blank">View</a>
+                {% else %}-{% endif %}
+              </td>
+              <td>{{ o.pickup_option }}</td>
+              <td>
+                {% if o.status == "Pending" %}
+                  <span class="status-badge pending">Pending</span>
+                {% elif o.status == "Received" %}
+                  <span class="status-badge received">Received</span>
+                {% elif o.status == "Packed" %}
+                  <span class="status-badge packed">Packed</span>
+                {% else %}
+                  {{ o.status }}
+                {% endif %}
+              </td>
+              <td class="admin-order-actions order-actions-fixed">
+                <form method="post" action="{{ url_for('admin_change_status', order_id=o.id) }}" class="status-form order-status-form">
+                  <select name="status" class="admin-input admin-select">
+                    <option value="Pending" {% if o.status=='Pending' %}selected{% endif %}>Pending</option>
+                    <option value="Received" {% if o.status=='Received' %}selected{% endif %}>Received</option>
+                    <option value="Packed" {% if o.status=='Packed' %}selected{% endif %}>Packed</option>
+                    <option value="Delivered/Pickup Ready" {% if o.status=='Delivered/Pickup Ready' %}selected{% endif %}>Delivered/Pickup Ready</option>
+                  </select>
+                  <button class="btn small admin-btn-sm action-btn" type="submit">Update</button>
+                </form>
+                <a class="btn small admin-btn-sm action-btn" href="{{ url_for('billing', order_id=o.id) }}">Open Billing</a>
+                <form method="post" action="{{ url_for('admin_delete_order', order_id=o.id) }}" class="inline-form order-delete-form">
+                  <button class="btn small danger admin-btn-sm action-btn" type="submit" onclick="return confirm('Delete this order?');">Delete</button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p>No pending/unbilled orders.</p>
+    {% endif %}
+  </div>
+
+  <div class="orders-card admin-orders-card">
+    <h3>Billed / Finished Orders</h3>
+    {% if billed_orders_data %}
+      <div class="table-wrap">
+        <table class="orders-table admin-orders-table">
+          <thead>
+            <tr>
+              <th>Order ID</th>
+              <th>Bill ID</th>
+              <th>Customer</th>
+              <th>Status</th>
+              <th>Total</th>
+              <th>Created</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in billed_orders_data %}
+            <tr>
+              <td>{{ row.order.order_id }}</td>
+              <td>{{ row.bill.bill_id }}</td>
+              <td>{{ row.order.customer.name }}<br><small>{{ row.order.customer.email }}</small></td>
+              <td>
+                {% if row.order.status == "Received" %}
+                  <span class="status-badge received">Received</span>
+                {% elif row.order.status == "Delivered/Pickup Ready" %}
+                  <span class="status-badge delivered">Delivered/Pickup Ready</span>
+                {% else %}
+                  <span class="status-badge packed">Finished</span>
+                {% endif %}
+              </td>
+              <td>Rs {{ "%.2f"|format(row.bill.total_amount) }}</td>
+              <td>{{ row.bill.created_at|ist_datetime }}</td>
+              <td>
+                <a class="btn small admin-btn-sm" href="{{ url_for('download_bill', bill_id=row.bill.bill_id) }}">Download Bill</a>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p>No billed/finished orders yet.</p>
+    {% endif %}
+  </div>
+
+  <div class="bills-card admin-bills-card">
+    <h3>Generated Bills</h3>
+    {% if bills %}
+      <ul class="bills-list">
+        {% for b in bills %}
+          <li class="bill-row">
+            <span class="bill-meta">{{ b.bill_id }} - Order: {{ b.order_id }} - Total Rs {{ "%.2f"|format(b.total_amount) }}</span>
+            <a class="bill-link" href="{{ url_for('download_bill', bill_id=b.bill_id) }}">Download</a>
+            <form method="post" action="{{ url_for('delete_bill', bill_id=b.bill_id) }}" class="inline-form">
+              <button class="btn small danger admin-btn-sm" type="submit" onclick="return confirm('Are you sure you want to delete this bill?');">Delete</button>
+            </form>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p>No bills yet.</p>
+    {% endif %}
+  </div>
+
+</div>
+
+<script>
+  function openDeleteModal() {
+    const modal = document.getElementById('deleteModal');
+    const card = document.getElementById('deleteCard');
+    modal.style.display = 'flex';
+    setTimeout(() => { card.style.transform = 'scale(1)'; }, 50);
+  }
+  function closeDeleteModal() {
+    const modal = document.getElementById('deleteModal');
+    const card = document.getElementById('deleteCard');
+    card.style.transform = 'scale(0)';
+    setTimeout(() => { modal.style.display = 'none'; }, 300);
+  }
+  function animateDelete() {
+    const card = document.getElementById('deleteCard');
+    card.style.transform = 'scale(0)';
+  }
+  function toggleNotifications() {
+    document.getElementById('mailPanel').classList.remove('open');
+    document.getElementById('activityPanel').classList.remove('open');
+    const panel = document.getElementById('notifPanel');
+    const willOpen = !panel.classList.contains('open');
+    panel.classList.toggle('open');
+    if (willOpen) {
+      fetch("{{ url_for('admin_notifications_seen') }}", { method: "POST" })
+        .then(() => { document.getElementById('notifCount').textContent = "0"; })
+        .catch(() => {});
+    }
+  }
+  function toggleMailPanel() {
+    const panel = document.getElementById('mailPanel');
+    const overlay = document.getElementById('mailOverlay');
+    document.getElementById('notifPanel').classList.remove('open');
+    document.getElementById('activityPanel').classList.remove('open');
+    const willOpen = !panel.classList.contains('open');
+    panel.classList.toggle('open', willOpen);
+    overlay.classList.toggle('open', willOpen);
+  }
+  function toggleActivityPanel() {
+    document.getElementById('notifPanel').classList.remove('open');
+    document.getElementById('mailPanel').classList.remove('open');
+    document.getElementById('mailOverlay').classList.remove('open');
+    const panel = document.getElementById('activityPanel');
+    const willOpen = !panel.classList.contains('open');
+    panel.classList.toggle('open');
+    if (willOpen) {
+      fetch("{{ url_for('admin_activity_seen') }}", { method: "POST" })
+        .then(() => { document.getElementById('activityCount').textContent = "0"; })
+        .catch(() => {});
+    }
+  }
+  function closeMailPanel() {
+    document.getElementById('mailPanel').classList.remove('open');
+    document.getElementById('mailOverlay').classList.remove('open');
+  }
+  function toggleCustomerField() {
+    const isSpecific = document.getElementById('mailTarget').value === 'specific';
+    document.getElementById('customerRefLabel').classList.toggle('hidden', !isSpecific);
+    document.getElementById('customerRefField').classList.toggle('hidden', !isSpecific);
+  }
+  window.addEventListener('click', function(e){
+    const notifPanel = document.getElementById('notifPanel');
+    const mailPanel = document.getElementById('mailPanel');
+    const activityPanel = document.getElementById('activityPanel');
+    if (!e.target.closest('.notif-btn') && !e.target.closest('#notifPanel') && !e.target.closest('#mailPanel') && !e.target.closest('#activityPanel')) {
+      notifPanel.classList.remove('open');
+      closeMailPanel();
+      activityPanel.classList.remove('open');
+    }
+  });
+</script>
+{% endblock %}

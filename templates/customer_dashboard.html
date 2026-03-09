@@ -1,0 +1,217 @@
+﻿{% extends "base.html" %}
+{% block content %}
+<div class="customer-wrap">
+
+  <div class="customer-card deals-card">
+    <h3>Today's Deals</h3>
+    <div class="deals-rotator">
+      {% for d in deals %}
+        <div class="deal-item {% if loop.first %}active{% endif %}">{{ d }}</div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="customer-card favorites-card">
+    <h3>Saved Favorites</h3>
+    <form method="post" action="{{ url_for('customer_add_favorite') }}" class="favorite-add-form">
+      <input class="customer-input" type="text" name="item_text" placeholder="Add frequent item (e.g., 5kg rice, 1L oil)" required>
+      <button class="btn customer-btn" type="submit">Pin Favorite</button>
+    </form>
+    {% if favorites %}
+      <ul class="favorites-list">
+        {% for f in favorites %}
+        <li>
+          <span>{{ f.item_text }}</span>
+          <div class="favorite-actions">
+            <form method="post" action="{{ url_for('customer_use_favorite', fav_id=f.id) }}">
+              <button class="btn small customer-btn-sm" type="submit">Use</button>
+            </form>
+            <form method="post" action="{{ url_for('customer_delete_favorite', fav_id=f.id) }}">
+              <button class="btn small danger customer-btn-sm" type="submit">Remove</button>
+            </form>
+          </div>
+        </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p>No favorites yet.</p>
+    {% endif %}
+  </div>
+
+  <div class="customer-card">
+    <h3>Your Details</h3>
+    <p><strong>Name:</strong> {{ customer.name }}</p>
+    <p><strong>CUID:</strong> {{ customer.cuid }}</p>
+    <p><strong>Mobile:</strong> {{ customer.mobile }}</p>
+    <p><strong>Address:</strong> {{ customer.address }}</p>
+
+    <div class="customer-actions">
+      <a href="{{ url_for('customer_update') }}" class="btn small customer-btn"><b>Edit Profile</b></a>
+      <button class="btn small danger customer-btn" onclick="openDeleteModal()"><b>Delete Account</b></button>
+    </div>
+  </div>
+
+  <div class="order-form-card">
+    <h3>Place Order</h3>
+    <form method="post" enctype="multipart/form-data">
+      <label>Order (text)</label>
+      <textarea class="customer-input" name="order_text" placeholder="2kg rice, 1kg sugar...">{{ prefill_order_text }}</textarea>
+      <br>
+      <label>Upload document (jpg, png, pdf, doc)</label>
+      <input class="customer-input customer-file" type="file" name="order_file">
+
+      <label>Pickup option</label>
+      <select class="customer-input" name="pickup_option">
+        <option>Self Pick</option>
+        <option>Home Delivery</option>
+      </select>
+
+      <div class="form-actions customer-form-actions">
+        <button class="btn customer-btn" type="submit">Submit Order</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="orders-card">
+    <h3>Your Orders</h3>
+
+    {% if orders %}
+      <table class="orders-table">
+        <thead>
+          <tr>
+            <th>OrderID</th>
+            <th>Items/Text</th>
+            <th>File</th>
+            <th>Pickup</th>
+            <th>Status</th>
+            <th>Progress</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for o in orders %}
+          <tr>
+            <td>{{ o.order_id }}</td>
+            <td class="orders-text">{{ o.raw_text or '-' }}</td>
+            <td>
+              {% if o.uploaded_filename %}
+                <a href="{{ url_for('uploaded_file', filename=o.uploaded_filename) }}" target="_blank">View</a>
+              {% else %}-{% endif %}
+            </td>
+            <td>{{ o.pickup_option }}</td>
+            <td>
+              {% if o.status == "Pending" %}
+                <span class="status-badge pending">Pending</span>
+              {% elif o.status == "Received" %}
+                <span class="status-badge received">Received</span>
+              {% elif o.status == "Packed" %}
+                <span class="status-badge packed">Packed</span>
+              {% elif o.status == "Delivered/Pickup Ready" %}
+                <span class="status-badge delivered">Delivered/Pickup Ready</span>
+              {% else %}
+                {{ o.status }}
+              {% endif %}
+            </td>
+            <td>
+              {% set current_step = 1 %}
+              {% if o.status == 'Received' %}{% set current_step = 2 %}{% endif %}
+              {% if o.status == 'Packed' %}{% set current_step = 3 %}{% endif %}
+              {% if o.status == 'Delivered/Pickup Ready' %}{% set current_step = 4 %}{% endif %}
+              <div class="order-timeline" data-step="{{ current_step }}">
+                <span class="timeline-step {% if current_step >= 1 %}done{% endif %}">Pending</span>
+                <span class="timeline-step {% if current_step >= 2 %}done{% endif %}">Received</span>
+                <span class="timeline-step {% if current_step >= 3 %}done{% endif %}">Packed</span>
+                <span class="timeline-step {% if current_step >= 4 %}done{% endif %}">Delivered</span>
+              </div>
+            </td>
+            <td class="order-actions">
+              <form method="post" action="{{ url_for('customer_reorder', order_pk=o.id) }}" onsubmit="return confirm('Reorder this cart?');">
+                <button class="btn small customer-btn-sm">Reorder</button>
+              </form>
+              {% if o.raw_text %}
+              <form method="post" action="{{ url_for('customer_add_favorite') }}">
+                <input type="hidden" name="item_text" value="{{ o.raw_text }}">
+                <button class="btn small customer-btn-sm" type="submit">Pin</button>
+              </form>
+              {% endif %}
+              <form method="post" action="{{ url_for('customer_delete_order', order_pk=o.id) }}" onsubmit="return confirm('Delete order?');">
+                <button class="btn small danger customer-btn-sm">Delete</button>
+              </form>
+
+              {% if bills.get(o.order_id) %}
+                <a class="btn small customer-btn-sm" href="{{ url_for('download_bill', bill_id=bills[o.order_id].bill_id) }}">Download Bill</a>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% else %}
+      <p>No orders placed yet.</p>
+    {% endif %}
+  </div>
+
+</div>
+
+<div id="deleteModal" class="delete-modal">
+  <div id="deleteCard" class="delete-card">
+    <h3 class="delete-title"><b>Warning!</b></h3>
+    <p>Are you sure you want to delete your account?</p>
+    <div class="delete-actions">
+      <button class="btn customer-btn-sm" onclick="closeDeleteModal()">No</button>
+      <form method="post" action="{{ url_for('customer_delete') }}">
+        <button class="btn danger customer-btn-sm" type="submit" onclick="animateDelete()">Yes</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<div id="toast" class="dashboard-toast">Account deleted successfully!</div>
+
+<script>
+  function openDeleteModal() {
+    const modal = document.getElementById('deleteModal');
+    const card = document.getElementById('deleteCard');
+    modal.style.display = 'flex';
+    setTimeout(() => { card.style.transform = 'scale(1)'; }, 50);
+  }
+
+  function closeDeleteModal() {
+    const modal = document.getElementById('deleteModal');
+    const card = document.getElementById('deleteCard');
+    card.style.transform = 'scale(0)';
+    setTimeout(() => { modal.style.display = 'none'; }, 300);
+  }
+
+  function animateDelete() {
+    const card = document.getElementById('deleteCard');
+    card.style.transform = 'scale(0)';
+    setTimeout(() => {
+      showToast();
+    }, 300);
+  }
+
+  function showToast() {
+    const toast = document.getElementById('toast');
+    toast.style.visibility = 'visible';
+    toast.style.opacity = '1';
+    toast.style.bottom = '50px';
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      toast.style.bottom = '30px';
+      setTimeout(() => { toast.style.visibility = 'hidden'; }, 500);
+    }, 3000);
+  }
+
+  (function rotateDeals(){
+    const deals = document.querySelectorAll('.deal-item');
+    if (!deals.length) return;
+    let idx = 0;
+    setInterval(() => {
+      deals[idx].classList.remove('active');
+      idx = (idx + 1) % deals.length;
+      deals[idx].classList.add('active');
+    }, 2500);
+  })();
+</script>
+{% endblock %}

@@ -1,0 +1,246 @@
+﻿<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Sri Vinayaga Stores</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}?v=7">
+  <meta name="theme-color" content="#2b7a78">
+  <link rel="icon" href="{{ url_for('static', filename='svs-favicon-v7.ico') }}" sizes="any">
+  <link rel="shortcut icon" href="{{ url_for('static', filename='svs-favicon-v7.ico') }}">
+  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='svs-favicon-v7.ico') }}">
+  <link rel="icon" type="image/png" sizes="32x32" href="{{ url_for('static', filename='favicon-32x32.png') }}?v=7">
+  <link rel="icon" type="image/png" sizes="16x16" href="{{ url_for('static', filename='favicon-16x16.png') }}?v=7">
+  <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/icon-192.png') }}?v=7">
+</head>
+<body>
+  <div class="layout">
+    <nav id="sideNav" class="sidenav">
+      <div class="nav-head">
+        <button id="navToggle" class="nav-toggle" aria-label="Toggle navigation">&#9776;</button>
+        <span class="nav-brand">Sri Vinaya Stores</span>
+      </div>
+      <ul>
+        <li>
+          <a class="nav-link" href="{{ url_for('home') }}">
+            <span class="nav-icon" aria-hidden="true">
+              <svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none"><path d="M3 10.5L12 3l9 7.5"/><path d="M5.5 9.5V20h13V9.5"/></svg>
+            </span>
+            <span class="nav-label">Home</span>
+          </a>
+        </li>
+        <li>
+          <a class="nav-link" href="{{ url_for('customer_login') }}">
+            <span class="nav-icon" aria-hidden="true">
+              <svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.5"/><path d="M5 20a7 7 0 0 1 14 0"/></svg>
+            </span>
+            <span class="nav-label">Customer</span>
+          </a>
+        </li>
+        <li>
+          <a class="nav-link" href="{{ url_for('admin_security') }}">
+            <span class="nav-icon" aria-hidden="true">
+              <svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none"><path d="M12 9.2a2.8 2.8 0 1 0 0 5.6 2.8 2.8 0 0 0 0-5.6Z"/><path d="M19.4 13.2v-2.4l-1.8-.5a5.9 5.9 0 0 0-.5-1.2l.9-1.7-1.7-1.7-1.7.9a5.9 5.9 0 0 0-1.2-.5l-.5-1.8h-2.4l-.5 1.8a5.9 5.9 0 0 0-1.2.5l-1.7-.9-1.7 1.7.9 1.7c-.2.4-.4.8-.5 1.2l-1.8.5v2.4l1.8.5c.1.4.3.8.5 1.2l-.9 1.7 1.7 1.7 1.7-.9c.4.2.8.4 1.2.5l.5 1.8h2.4l.5-1.8c.4-.1.8-.3 1.2-.5l1.7.9 1.7-1.7-.9-1.7c.2-.4.4-.8.5-1.2l1.8-.5Z"/></svg>
+            </span>
+            <span class="nav-label">Admin</span>
+          </a>
+        </li>
+        <li>
+          <button id="install-btn" class="nav-action install-btn">
+            <span class="nav-icon" aria-hidden="true">
+              <svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none"><path d="M12 4v10"/><path d="m8.5 10.5 3.5 3.5 3.5-3.5"/><path d="M5 19h14"/></svg>
+            </span>
+            <span class="nav-action-label">Install App</span>
+          </button>
+        </li>
+        <li>
+          <button id="share-btn" class="nav-action share-btn">
+            <span class="nav-icon" aria-hidden="true">
+              <svg class="nav-icon-svg" viewBox="0 0 24 24" fill="none"><circle cx="18" cy="5" r="2.2"/><circle cx="6" cy="12" r="2.2"/><circle cx="18" cy="19" r="2.2"/><path d="M8 11l7.8-4.5"/><path d="M8 13l7.8 4.5"/></svg>
+            </span>
+            <span class="nav-action-label">Share</span>
+          </button>
+        </li>
+      </ul>
+    </nav>
+
+    <main class="main">
+      <header class="site-header">
+        <h1 class="shop-name">Sri Vinayaga Stores</h1>
+        <h5 class="location-line">Pillaiyar Kuppam, Vellore - 09.</h5>
+        <div class="quote-marquee" aria-label="Store highlights">
+          <div class="quote-track">Fresh daily groceries - Friendly service - Quality you can trust - Fast order pickup - Reliable home delivery</div>
+        </div>
+        <div class="top-links">
+          {% if session.get('role') == 'admin' %}
+            <div class="role-block">
+              <a class="badge" href="{{ url_for('admin_dashboard') }}">Admin: {{ session.get('admin_name') }}</a>
+              <span id="liveClock" class="live-clock">--:--:--</span>
+            </div>
+            <a class="btn" href="{{ url_for('admin_logout') }}">Logout</a>
+          {% elif session.get('role') == 'customer' %}
+            <div class="role-block">
+              <a class="badge" href="{{ url_for('customer_dashboard') }}">Customer: {{ session.get('customer_name') }}</a>
+              <span id="liveClock" class="live-clock">--:--:--</span>
+            </div>
+            <a class="btn" href="{{ url_for('customer_logout') }}">Logout</a>
+          {% endif %}
+          
+        </div>
+      </header>
+
+      <section class="content">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            <div class="flash-area">
+            {% for cat, msg in messages %}
+              <div class="flash {{cat}}">{{ msg }}</div>
+            {% endfor %}
+            </div>
+          {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+      </section>
+
+      <footer class="site-footer">
+        <p>(c) Sri Vinayaga Stores - 2025 - All Rights Received.</p>
+      </footer>
+    </main>
+  </div>
+  <aside id="cookieConsent" class="cookie-consent" role="dialog" aria-live="polite" aria-label="Cookie preferences">
+    <div class="cookie-card">
+      <h3>Cookie Preferences</h3>
+      <p>We use essential cookies for login/session. Choose how optional cookies are handled.</p>
+      <div class="cookie-actions">
+        <button type="button" id="cookieAcceptAll" class="btn">Accept All</button>
+        <button type="button" id="cookieOptional" class="btn small">Optional Only</button>
+        <button type="button" id="cookieRejectAll" class="btn small danger">Reject Optional</button>
+      </div>
+    </div>
+  </aside>
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    const banner = document.getElementById("cookieConsent");
+    const acceptBtn = document.getElementById("cookieAcceptAll");
+    const optionalBtn = document.getElementById("cookieOptional");
+    const rejectBtn = document.getElementById("cookieRejectAll");
+    const consentKey = "svs_cookie_consent_v1";
+    if (!banner || !acceptBtn || !optionalBtn || !rejectBtn) return;
+
+    const saved = localStorage.getItem(consentKey);
+    if (!saved) {
+      banner.classList.add("show");
+    }
+
+    function saveConsent(mode) {
+      const payload = {
+        mode: mode,
+        essential: true,
+        optional: mode === "accept_all" || mode === "optional_only",
+        marketing: mode === "accept_all",
+        saved_at: new Date().toISOString()
+      };
+      localStorage.setItem(consentKey, JSON.stringify(payload));
+      banner.classList.remove("show");
+      document.dispatchEvent(new CustomEvent("svs:cookie-consent-updated", { detail: payload }));
+    }
+
+    acceptBtn.addEventListener("click", function(){ saveConsent("accept_all"); });
+    optionalBtn.addEventListener("click", function(){ saveConsent("optional_only"); });
+    rejectBtn.addEventListener("click", function(){ saveConsent("reject_optional"); });
+  });
+</script>
+<script>
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker
+        .register("{{ url_for('static', filename='service-worker.js') }}")
+        .then(reg => console.log("Service Worker registered", reg))
+        .catch(err => console.log("Service Worker failed", err));
+    });
+  }
+</script>
+<script>
+  const shareBtn = document.getElementById("share-btn");
+  if (shareBtn) {
+    shareBtn.addEventListener("click", async () => {
+      const shareData = { title: "Check this app", text: "Install this app - Shop Online", url: window.location.origin };
+      if (navigator.share) {
+        try { await navigator.share(shareData); } catch (err) { console.log("Share canceled"); }
+      } else {
+        navigator.clipboard.writeText(window.location.origin);
+        alert("Link copied to clipboard");
+      }
+    });
+  }
+</script>
+<script>
+  let deferredPrompt;
+  window.addEventListener("beforeinstallprompt", (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    const btn = document.getElementById("install-btn");
+    btn.disabled = false;
+    btn.classList.add("is-ready");
+  });
+  document.getElementById("install-btn").addEventListener("click", async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    await deferredPrompt.userChoice;
+    deferredPrompt = null;
+  });
+</script>
+<script>
+  document.addEventListener("DOMContentLoaded", function() {
+    const flashMessages = document.querySelectorAll(".flash");
+    flashMessages.forEach(msg => {
+      const text = msg.innerText.toLowerCase();
+      const hideTime = (text.includes("cuid") || text.includes("auid")) ? 30000 : 10000;
+      setTimeout(() => { msg.classList.add("fade-out"); }, hideTime);
+    });
+    const liveClock = document.getElementById("liveClock");
+    function updateLiveClock(){
+      if (!liveClock) return;
+      try {
+        const now = new Date();
+        liveClock.textContent = now.toLocaleString("en-IN", {
+          timeZone: "Asia/Kolkata",
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+          day: "2-digit",
+          month: "short"
+        }) + " IST";
+      } catch (e) {
+        liveClock.textContent = new Date().toLocaleTimeString();
+      }
+    }
+    updateLiveClock();
+    setInterval(updateLiveClock, 1000);
+  });
+</script>
+<script>
+  // Client-side deterrent only (not a real security boundary)
+  document.addEventListener("contextmenu", function (e) {
+    e.preventDefault();
+  });
+
+  document.addEventListener("keydown", function (e) {
+    const key = (e.key || "").toLowerCase();
+    const blocked =
+      key === "f12" ||
+      (e.ctrlKey && e.shiftKey && ["i", "j", "c"].includes(key)) ||
+      (e.ctrlKey && ["u", "s"].includes(key));
+
+    if (blocked) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+  });
+</script>
+</body>
+</html>

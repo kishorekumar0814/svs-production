@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+    .otp-container {
+        display: flex;
+        justify-content: center;
+        margin-top: 50px;
+    }
+
+    .otp-card {
+        background: #fff;
+        width: 420px;
+        padding: 28px;
+        border-radius: 14px;
+        box-shadow: 0px 4px 18px rgba(0, 0, 0, 0.1);
+        animation: fadeIn 0.3s ease-in-out;
+    }
+
+    .otp-card h3 {
+        text-align: center;
+        font-weight: 600;
+        margin-bottom: 20px;
+    }
+
+    .otp-inputs {
+        display: flex;
+        justify-content: space-between;
+        margin: 20px 0;
+    }
+
+    .otp-box {
+        width: 45px;
+        height: 50px;
+        font-size: 22px;
+        text-align: center;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        outline: none;
+        transition: 0.2s;
+    }
+
+    .otp-box:focus {
+        border-color: #007bff;
+        box-shadow: 0 0 5px rgba(0, 123, 255, 0.4);
+    }
+
+    .btn-submit {
+        width: 100%;
+        padding: 10px;
+        background: #007bff;
+        border: none;
+        color: white;
+        border-radius: 8px;
+        font-size: 17px;
+        margin-top: 15px;
+        cursor: pointer;
+    }
+
+    .btn-submit:hover {
+        background: #0056b3;
+    }
+
+    .resend-section {
+        text-align: center;
+        margin-top: 15px;
+    }
+
+    .resend-btn {
+        background: none;
+        border: none;
+        color: #007bff;
+        cursor: pointer;
+        font-size: 15px;
+    }
+
+    .resend-btn:disabled {
+        color: gray;
+        cursor: not-allowed;
+    }
+
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+</style>
+
+<div class="otp-container">
+    <div class="otp-card">
+
+        <h3>Verify Customer OTP</h3>
+
+        <form method="POST" id="otpForm">
+            <div class="otp-inputs">
+                <input type="text" maxlength="1" class="otp-box" name="otp1">
+                <input type="text" maxlength="1" class="otp-box" name="otp2">
+                <input type="text" maxlength="1" class="otp-box" name="otp3">
+                <input type="text" maxlength="1" class="otp-box" name="otp4">
+                <input type="text" maxlength="1" class="otp-box" name="otp5">
+                <input type="text" maxlength="1" class="otp-box" name="otp6">
+            </div>
+
+            <input type="hidden" id="finalOtp" name="otp">
+
+            <button class="btn-submit" type="submit">Verify OTP</button>
+
+            <div class="resend-section">
+                <span id="timer">Resend OTP in 60s</span><br>
+                <a href="{{ url_for('customer_resend_otp') }}">
+                    <button type="button" class="resend-btn" id="resendBtn" disabled>Resend OTP</button>
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    const inputs = document.querySelectorAll(".otp-box");
+    const finalOtp = document.getElementById("finalOtp");
+
+    // Auto focus next box
+    inputs.forEach((input, index) => {
+        input.addEventListener("input", () => {
+            if (input.value.match(/^[0-9]$/)) {
+                if (index < 5) inputs[index + 1].focus();
+            } else {
+                input.value = "";
+            }
+        });
+
+        input.addEventListener("keydown", (e) => {
+            if (e.key === "Backspace" && index > 0 && !input.value) {
+                inputs[index - 1].focus();
+            }
+        });
+    });
+
+    // Before submit → combine OTP
+    document.getElementById("otpForm").addEventListener("submit", function () {
+        let otp = "";
+        inputs.forEach(i => otp += i.value);
+        finalOtp.value = otp;
+    });
+
+    // TIMER
+    let timer = 60;
+    const timerLabel = document.getElementById("timer");
+    const resendBtn = document.getElementById("resendBtn");
+
+    const countdown = setInterval(() => {
+        timer--;
+        timerLabel.textContent = "Resend OTP in " + timer + "s";
+
+        if (timer <= 0) {
+            clearInterval(countdown);
+            timerLabel.textContent = "You can resend OTP now.";
+            resendBtn.disabled = false;
+        }
+    }, 1000);
+</script>
+
+{% endblock %}

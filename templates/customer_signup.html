@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="center-card">
+  <h2>Customer Sign Up</h2>
+  <form method="post">
+    <label>Name</label>
+    <input type="text" name="name" placeholder="Enter full name" autocomplete="name" required>
+    <label>Email</label>
+    <input type="email" name="email" placeholder="Enter email address" autocomplete="email" required>
+    <label>Mobile</label>
+    <input type="text" name="mobile" placeholder="Enter mobile number" autocomplete="tel" required>
+    <label>Address</label>
+    <textarea name="address" placeholder="Enter address"></textarea>
+    <label>Password</label>
+    <input type="password" name="password" placeholder="Create password" autocomplete="new-password" required>
+    <div class="form-actions">
+    <button class="btn" type="submit">Create Account</button>
+    </div>
+  </form>
+</div>
+{% endblock %}

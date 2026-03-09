@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+/* ----- Page Centering ----- */
+.signup-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 88vh;
+    animation: fadeIn 0.6s ease-in-out;
+}
+
+/* ----- Glass Card Effect ----- */
+.signup-card {
+    width: 380px;
+    padding: 30px;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.15);
+    backdrop-filter: blur(14px);
+    box-shadow: 0 6px 25px rgba(0,0,0,0.15);
+    animation: slideUp 0.6s ease;
+}
+
+/* ----- Floating Label Container ----- */
+.floating-field {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+/* ----- Input Style ----- */
+.floating-input {
+    width: 100%;
+    padding: 12px 10px;
+    font-size: 16px;
+    border: 1.4px solid #ccc;
+    border-radius: 8px;
+    background: transparent;
+    outline: none;
+    transition: 0.25s;
+}
+
+/* ----- Floating Label ----- */
+.floating-label {
+    position: absolute;
+    left: 12px;
+    top: 12px;
+    color: #555;
+    background: transparent;
+    pointer-events: none;
+    transition: 0.25s ease;
+}
+
+/* ----- Animation when typing ----- */
+.floating-input:focus,
+.floating-input:not(:placeholder-shown) {
+    border-color: #007bff;
+}
+
+.floating-input:focus + .floating-label,
+.floating-input:not(:placeholder-shown) + .floating-label {
+    top: -8px;
+    left: 10px;
+    font-size: 13px;
+    padding: 0 4px;
+    background: white;
+    color: #007bff;
+}
+
+/* ----- Button ----- */
+.btn-otp {
+    width: 100%;
+    padding: 12px;
+    background: linear-gradient(135deg, #0066ff, #0099ff);
+    border: none;
+    border-radius: 8px;
+    color: white;
+    font-weight: bold;
+    font-size: 16px;
+    cursor: pointer;
+    transition: 0.25s;
+}
+
+.btn-otp:hover {
+    transform: scale(1.03);
+    box-shadow: 0 3px 12px rgba(0, 102, 255, 0.3);
+}
+
+/* ----- Animations ----- */
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+@keyframes slideUp {
+    from { transform: translateY(25px); opacity: 0; }
+    to   { transform: translateY(0); opacity: 1; }
+}
+</style>
+
+<div class="signup-wrapper">
+
+    <div class="signup-card">
+        <h2 class="heading-center">Admin Signup</h2>
+
+        <form method="POST">
+
+            <div class="floating-field">
+                <input type="text" name="name" class="floating-input" placeholder=" " required>
+                <label class="floating-label">Full Name</label>
+            </div>
+
+            <div class="floating-field">
+                <input type="email" name="email" class="floating-input" placeholder=" " required>
+                <label class="floating-label">Email</label>
+            </div>
+
+            <div class="floating-field">
+                <input type="text" name="mobile" class="floating-input" placeholder=" " required>
+                <label class="floating-label">Mobile Number</label>
+            </div>
+
+            <div class="floating-field">
+                <input type="password" name="password" class="floating-input" placeholder=" " required>
+                <label class="floating-label">Password</label>
+            </div>
+
+            <button class="btn-otp" type="submit">Send OTP</button>
+
+        </form>
+    </div>
+
+</div>
+
+{% endblock %}
+
