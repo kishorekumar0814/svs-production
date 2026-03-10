@@ -4,6 +4,8 @@ import random
 import base64
 import html
 import requests
+import smtplib
+from email.message import EmailMessage
 from email.utils import formataddr
 from flask import Flask, render_template, request, redirect, url_for, flash, session, send_from_directory, abort, jsonify
 from flask_sqlalchemy import SQLAlchemy
@@ -77,22 +79,73 @@ def _email_shell(title, subtitle, content_html):
 
 def smtp_send(to_emails, subject, html_content, attachments=None):
     """
-    Send an email via Resend API.
+    Send an email via SendGrid SMTP (preferred) or Resend API (fallback).
     - to_emails: single email or list
     - attachments: list of dicts: [{"content": base64str, "type":"application/pdf","filename":"x.pdf"}]
     """
     try:
-        resend_api_key = os.getenv("RESEND_API_KEY", "").strip()
-        from_email = os.getenv("RESEND_FROM_EMAIL") or os.getenv("FROM_EMAIL")
-        from_name = os.getenv("FROM_NAME", "Sri Vinayaga Stores").strip()
-        if not resend_api_key:
-            print("RESEND_API_KEY not set. Skipping send.")
-            return False
-        if not from_email:
-            print("RESEND_FROM_EMAIL/FROM_EMAIL not set. Skipping send.")
-            return False
         to_list = to_emails if isinstance(to_emails, list) else [to_emails]
         if not to_list:
+            return False
+
+        from_name = os.getenv("FROM_NAME", "Sri Vinayaga Stores").strip()
+        from_email = (
+            os.getenv("SENDGRID_FROM_EMAIL")
+            or os.getenv("RESEND_FROM_EMAIL")
+            or os.getenv("FROM_EMAIL")
+        )
+        if not from_email:
+            print("FROM_EMAIL not set. Skipping send.")
+            return False
+
+        sendgrid_api_key = os.getenv("SENDGRID_API_KEY", "").strip()
+        if sendgrid_api_key:
+            smtp_host = os.getenv("SENDGRID_SMTP_HOST", "smtp.sendgrid.net").strip()
+            smtp_port = int(os.getenv("SENDGRID_SMTP_PORT", "587"))
+            smtp_user = os.getenv("SENDGRID_SMTP_USERNAME", "apikey").strip()
+            smtp_pass = sendgrid_api_key
+            use_tls = os.getenv("SENDGRID_SMTP_USE_TLS", "True") == "True"
+            use_ssl = os.getenv("SENDGRID_SMTP_USE_SSL", "False") == "True"
+
+            msg = EmailMessage()
+            msg["From"] = formataddr((from_name, from_email))
+            msg["To"] = ", ".join(to_list)
+            msg["Subject"] = subject
+            msg.set_content("Please view this email in an HTML-capable client.")
+            msg.add_alternative(html_content, subtype="html")
+
+            if attachments:
+                for at in attachments:
+                    content_b64 = at.get("content")
+                    filename = at.get("filename", "attachment")
+                    mime = at.get("type", "application/octet-stream")
+                    if not content_b64:
+                        continue
+                    try:
+                        data = base64.b64decode(content_b64)
+                    except Exception:
+                        continue
+                    if "/" in mime:
+                        maintype, subtype = mime.split("/", 1)
+                    else:
+                        maintype, subtype = "application", "octet-stream"
+                    msg.add_attachment(data, maintype=maintype, subtype=subtype, filename=filename)
+
+            if use_ssl:
+                with smtplib.SMTP_SSL(smtp_host, smtp_port, timeout=20) as smtp:
+                    smtp.login(smtp_user, smtp_pass)
+                    smtp.send_message(msg)
+            else:
+                with smtplib.SMTP(smtp_host, smtp_port, timeout=20) as smtp:
+                    if use_tls:
+                        smtp.starttls()
+                    smtp.login(smtp_user, smtp_pass)
+                    smtp.send_message(msg)
+            return True
+
+        resend_api_key = os.getenv("RESEND_API_KEY", "").strip()
+        if not resend_api_key:
+            print("SENDGRID_API_KEY/RESEND_API_KEY not set. Skipping send.")
             return False
 
         payload = {
@@ -105,8 +158,8 @@ def smtp_send(to_emails, subject, html_content, attachments=None):
             resend_attachments = []
             for at in attachments:
                 resend_attachments.append({
-                    "filename": at["filename"],
-                    "content": at["content"],
+                    "filename": at.get("filename", "attachment"),
+                    "content": at.get("content", ""),
                 })
             payload["attachments"] = resend_attachments
 
@@ -125,7 +178,7 @@ def smtp_send(to_emails, subject, html_content, attachments=None):
         return True
 
     except Exception as e:
-        print("Resend send exception:", e)
+        print("Email send exception:", e)
         return False
 
 def send_email_otp(to_email, otp):
