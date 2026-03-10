@@ -7,7 +7,7 @@ import requests
 import smtplib
 from email.message import EmailMessage
 from email.utils import formataddr
-from flask import Flask, render_template, request, redirect, url_for, flash, session, send_from_directory, abort, jsonify
+from flask import Flask, render_template, request, redirect, url_for, flash, session, send_from_directory, abort, jsonify, g
 from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
@@ -41,6 +41,20 @@ attempts = {}
 # ---------------------------------------------------------------------
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXT
+
+def _email_error_hint():
+    try:
+        err = getattr(g, "email_send_error", "")
+        if not err:
+            return ""
+        err = str(err).strip()
+        if not err:
+            return ""
+        if len(err) > 180:
+            err = err[:180] + "..."
+        return f" ({err})"
+    except Exception:
+        return ""
 
 def _email_shell(title, subtitle, content_html):
     safe_title = html.escape(title)
@@ -95,7 +109,12 @@ def smtp_send(to_emails, subject, html_content, attachments=None):
             or os.getenv("FROM_EMAIL")
         )
         if not from_email:
-            print("FROM_EMAIL not set. Skipping send.")
+            msg = "FROM_EMAIL not set"
+            print(msg)
+            try:
+                g.email_send_error = msg
+            except Exception:
+                pass
             return False
 
         sendgrid_api_key = os.getenv("SENDGRID_API_KEY", "").strip()
@@ -145,7 +164,12 @@ def smtp_send(to_emails, subject, html_content, attachments=None):
 
         resend_api_key = os.getenv("RESEND_API_KEY", "").strip()
         if not resend_api_key:
-            print("SENDGRID_API_KEY/RESEND_API_KEY not set. Skipping send.")
+            msg = "SENDGRID_API_KEY/RESEND_API_KEY not set"
+            print(msg)
+            try:
+                g.email_send_error = msg
+            except Exception:
+                pass
             return False
 
         payload = {
@@ -173,12 +197,22 @@ def smtp_send(to_emails, subject, html_content, attachments=None):
             timeout=20,
         )
         if response.status_code >= 400:
-            print(f"Resend send error {response.status_code}: {response.text}")
+            msg = f"Resend send error {response.status_code}: {response.text}"
+            print(msg)
+            try:
+                g.email_send_error = msg
+            except Exception:
+                pass
             return False
         return True
 
     except Exception as e:
-        print("Email send exception:", e)
+        msg = f"Email send exception: {e}"
+        print(msg)
+        try:
+            g.email_send_error = msg
+        except Exception:
+            pass
         return False
 
 def send_email_otp(to_email, otp):
@@ -497,7 +531,7 @@ def create_app():
         if send_email_otp(email, new_otp):
             flash("A new OTP has been sent to your email!", "success")
         else:
-            flash("Failed to send OTP email. Please check SMTP server settings.", "danger")
+            flash("Failed to send OTP email. Please check SMTP server settings." + _email_error_hint(), "danger")
         return redirect(url_for("admin_verify_otp"))
 
     def check_rate_limit(key):
@@ -544,7 +578,7 @@ def create_app():
             if send_email_otp(email, otp):
                 flash("OTP sent to your email!", "success")
                 return redirect(url_for("admin_verify_otp"))
-            flash("Failed to send OTP email. Please verify SMTP settings.", "danger")
+            flash("Failed to send OTP email. Please verify SMTP settings." + _email_error_hint(), "danger")
             return redirect(url_for("admin_signup"))
         return render_template("admin_signup.html")
 
@@ -1061,7 +1095,7 @@ def create_app():
             if send_email_otp(email, otp):
                 flash("OTP sent to your email!", "success")
                 return redirect(url_for("customer_verify_otp"))
-            flash("Failed to send OTP email. Please verify SMTP settings.", "danger")
+            flash("Failed to send OTP email. Please verify SMTP settings." + _email_error_hint(), "danger")
             return redirect(url_for('customer_signup'))
         return render_template("customer_signup.html")
 
@@ -1112,7 +1146,7 @@ def create_app():
         if send_email_otp(data["email"], new_otp):
             flash("A new OTP has been sent!", "success")
         else:
-            flash("Failed to send OTP email. Please check SMTP server settings.", "danger")
+            flash("Failed to send OTP email. Please check SMTP server settings." + _email_error_hint(), "danger")
         return redirect(url_for('customer_verify_otp'))
 
     @app.route('/customer/login', methods=['GET','POST'])
